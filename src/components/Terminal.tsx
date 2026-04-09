@@ -21,6 +21,7 @@ export default function Terminal({ commands = [], onCommand }: Props) {
     { type: 'output', text: 'Type "help" to see available commands.' },
   ])
   const [input, setInput] = useState('')
+  const [staged, setStaged] = useState<string[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -44,7 +45,17 @@ export default function Terminal({ commands = [], onCommand }: Props) {
       return
     }
 
-    const match = commands.find(c => c.input === cmd)
+    if (cmd.startsWith('git add ')) {
+      const file = cmd.slice('git add '.length).trim()
+      setStaged(s => s.includes(file) ? s : [...s, file])
+      onCommand?.(cmd, true)
+      return
+    }
+
+    const match = cmd === 'git status'
+      ? commands.filter(c => c.input === 'git status')[staged.length > 0 ? 1 : 0]
+      : commands.find(c => c.input === cmd)
+
     if (match) {
       if (match.output) setHistory(h => [...h, { type: 'output', text: match.output }])
       onCommand?.(cmd, true)
