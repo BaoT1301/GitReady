@@ -22,6 +22,10 @@ export default function Terminal({ commands = [], onCommand }: Props) {
   ])
   const [input, setInput] = useState('')
   const [staged, setStaged] = useState<string[]>([])
+  // tracks all branches that exist (start with just main like a real repo)
+  const [branches, setBranches] = useState<string[]>(['main'])
+  // tracks which branch the user is currently on so git branch always shows the right *
+  const [currentBranch, setCurrentBranch] = useState('main')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -48,6 +52,46 @@ export default function Terminal({ commands = [], onCommand }: Props) {
     if (cmd.startsWith('git add ')) {
       const file = cmd.slice('git add '.length).trim()
       setStaged(s => s.includes(file) ? s : [...s, file])
+      onCommand?.(cmd, true)
+      return
+    }
+
+    if (cmd.startsWith('git checkout -b ')) {
+      const newBranch = cmd.slice('git checkout -b '.length).trim()
+      // add the new branch to state only if it doesn't already exist
+      setBranches(b => b.includes(newBranch) ? b : [...b, newBranch])
+      // update current branch so future git branch calls show the right *
+      setCurrentBranch(newBranch)
+      // build the branch list manually here because setBranches is async —
+      // if we read branches right after calling setBranches it would still be stale
+      const branchList = [...branches, newBranch]
+      const branchOutput = `Switched to a new branch '${newBranch}'\n` +
+        branchList.map(b => b === newBranch ? `* ${b}` : `  ${b}`).join('\n')
+      setHistory(h => [...h, { type: 'output', text: branchOutput }])
+      onCommand?.(cmd, true)
+      return
+    }
+
+    if (cmd.startsWith('git checkout ')) {
+      const target = cmd.slice('git checkout '.length).trim()
+      if (branches.includes(target)) {
+        // switch to the existing branch and update state so git branch reflects it
+        setCurrentBranch(target)
+        setHistory(h => [...h, { type: 'output', text: `Switched to branch '${target}'` }])
+        onCommand?.(cmd, true)
+      } else {
+        // branch doesn't exist — show a real git-style error
+        setHistory(h => [...h, { type: 'error', text: `error: pathspec '${target}' did not match any branch` }])
+        onCommand?.(cmd, false)
+      }
+      return
+    }
+
+    if (cmd === 'git branch') {
+      // dynamically build output from state instead of static module data
+      // this is what fixes the bug — currentBranch persists across commands
+      const branchOutput = branches.map(b => b === currentBranch ? `* ${b}` : `  ${b}`).join('\n')
+      setHistory(h => [...h, { type: 'output', text: branchOutput }])
       onCommand?.(cmd, true)
       return
     }
