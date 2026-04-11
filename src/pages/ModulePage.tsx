@@ -80,7 +80,7 @@ export default function ModulePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
-      <div className="mb-4 text-sm text-gray-500">
+      <div className="mb-4 text-sm text-gray-500 dark:text-slate-400">
         <Link to="/modules" className="hover:underline">Modules</Link>
         {' / '}
         {module.title}
@@ -97,17 +97,21 @@ export default function ModulePage() {
                 setRecentTerminalEvents([])
               }}
               className={`w-full text-left px-2 py-1.5 rounded ${
-                !showQuiz && i === activeLessonIndex ? 'bg-gray-100 font-medium' : 'text-gray-500 hover:text-black'
+                !showQuiz && i === activeLessonIndex
+                  ? 'bg-gray-100 font-medium dark:bg-slate-700/80 dark:text-slate-100'
+                  : 'text-gray-500 hover:text-black dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              {isLessonComplete(module.id, l.id) ? '✓ ' : `${i + 1}. `}
+              {isLessonComplete(module.id, l.id) ? 'Done ' : `${i + 1}. `}
               {l.title}
             </button>
           ))}
           <button
             onClick={() => setShowQuiz(true)}
             className={`w-full text-left px-2 py-1.5 rounded ${
-              showQuiz ? 'bg-gray-100 font-medium' : 'text-gray-500 hover:text-black'
+              showQuiz
+                ? 'bg-gray-100 font-medium dark:bg-slate-700/80 dark:text-slate-100'
+                : 'text-gray-500 hover:text-black dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             Quiz
@@ -117,25 +121,25 @@ export default function ModulePage() {
         <div className="flex-1 space-y-6 min-w-0">
           {!showQuiz ? (
             <>
-              <h1 className="text-xl font-bold">{lesson.title}</h1>
+              <h1 className="text-xl font-bold dark:text-slate-100">{lesson.title}</h1>
 
-              <div className="text-sm text-gray-700 whitespace-pre-wrap border rounded p-4 bg-gray-50">
+              <div className="text-sm text-gray-700 whitespace-pre-wrap border rounded p-4 bg-gray-50 dark:border-slate-700 dark:bg-slate-900/65 dark:text-slate-300">
                 {lesson.content}
               </div>
 
               {lesson.terminalCommands && lesson.terminalCommands.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium mb-2">Try it out</p>
+                  <p className="text-sm font-medium mb-2 dark:text-slate-200">Try it out</p>
                   <Terminal
                     key={`${module.id}/${lesson.id}`}
                     commands={lesson.terminalCommands}
                     onCommand={handleTerminalCommand}
                   />
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
                     Practice: {lessonPractice.recognized}/{lessonPractice.attempts} recognized
                   </p>
                   {lastTerminalEvent && !lastTerminalEvent.recognized && lastTerminalEvent.hint && (
-                    <p className="mt-1 text-xs text-amber-700">Hint: {lastTerminalEvent.hint}</p>
+                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">Hint: {lastTerminalEvent.hint}</p>
                   )}
                 </div>
               )}
@@ -143,16 +147,16 @@ export default function ModulePage() {
               <AITutor lessonContext={lesson.content} terminalContext={terminalContext} />
 
               <div className="flex justify-end">
-                <button onClick={handleNext} className="px-4 py-2 bg-black text-white text-sm rounded">
+                <button onClick={handleNext} className="px-4 py-2 bg-black text-white text-sm rounded dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400 transition">
                   {activeLessonIndex < module.lessons.length - 1 ? 'Next ->' : 'Take Quiz ->'}
                 </button>
               </div>
             </>
           ) : (
             <>
-              <h1 className="text-xl font-bold">Quiz - {module.title}</h1>
+              <h1 className="text-xl font-bold dark:text-slate-100">Quiz - {module.title}</h1>
               <Quiz questions={module.quiz} onComplete={handleQuizComplete} />
-              <Link to="/modules" className="text-sm text-gray-500 hover:underline">&lt;- Back to Modules</Link>
+              <Link to="/modules" className="text-sm text-gray-500 hover:underline dark:text-slate-400">&lt;- Back to Modules</Link>
             </>
           )}
         </div>

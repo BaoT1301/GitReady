@@ -1,3 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-1: #eef6ff;
+    --bg-2: #f8fbf3;
+    --bg-3: #fff8ed;
+    --text-main: #0f172a;
+    color-scheme: light;
+  }
+
+  :root.dark {
+    --bg-1: #1d2f43;
+    --bg-2: #143227;
+    --bg-3: #3a2a1d;
+    --text-main: #e2e8f0;
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    color: var(--text-main);
+    background:
+      radial-gradient(circle at 15% 10%, var(--bg-1) 0%, transparent 35%),
+      radial-gradient(circle at 85% 15%, var(--bg-3) 0%, transparent 30%),
+      radial-gradient(circle at 50% 100%, var(--bg-2) 0%, transparent 40%),
+      #f8fafc;
+    background-attachment: fixed;
+    transition: background-color 240ms ease, color 240ms ease;
+  }
+
+  :root.dark body {
+    background:
+      radial-gradient(circle at 15% 10%, var(--bg-1) 0%, transparent 35%),
+      radial-gradient(circle at 85% 15%, var(--bg-3) 0%, transparent 30%),
+      radial-gradient(circle at 50% 100%, var(--bg-2) 0%, transparent 40%),
+      #0b1220;
+  }
+
+  ::selection {
+    background: #93c5fd;
+    color: #0b1020;
+  }
+
+  :root.dark ::selection {
+    background: #1d4ed8;
+    color: #e2e8f0;
+  }
+}

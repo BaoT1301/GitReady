@@ -69,13 +69,13 @@ export default function AITutor({ lessonContext, terminalContext }: Props) {
   }
 
   return (
-    <div className="border rounded">
-      <div className="border-b px-4 py-2 flex items-center justify-between">
-        <span className="text-sm font-medium">Ask AI Tutor</span>
+    <div className="border rounded dark:border-slate-700 dark:bg-slate-900/65">
+      <div className="border-b px-4 py-2 flex items-center justify-between dark:border-slate-700">
+        <span className="text-sm font-medium dark:text-slate-100">Ask AI Tutor</span>
         {messages.length > 0 && (
           <button
             onClick={() => setMessages([])}
-            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            className="text-xs text-gray-400 hover:text-red-500 transition-colors dark:text-slate-400 dark:hover:text-rose-300"
           >
             Clear chat
           </button>
@@ -83,12 +83,12 @@ export default function AITutor({ lessonContext, terminalContext }: Props) {
       </div>
 
       {terminalContext && (
-        <div className="px-4 py-2 border-b bg-amber-50 text-xs text-amber-800 flex items-center justify-between gap-2">
+        <div className="px-4 py-2 border-b bg-amber-50 text-xs text-amber-800 flex items-center justify-between gap-2 border-amber-100 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200">
           <span>Terminal context is attached to AI answers.</span>
           <button
             onClick={() => send('Can you explain my latest terminal mistake and what command I should run next?')}
             disabled={loading}
-            className="px-2 py-1 rounded border border-amber-200 bg-white hover:bg-amber-100 disabled:opacity-50"
+            className="px-2 py-1 rounded border border-amber-200 bg-white hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:bg-slate-900 dark:hover:bg-amber-900/30"
           >
             Diagnose latest command
           </button>
@@ -103,8 +103,8 @@ export default function AITutor({ lessonContext, terminalContext }: Props) {
                 <span
                   className={`inline-block rounded-2xl px-4 py-2 text-sm ${
                     msg.role === 'user'
-                      ? 'bg-black text-white rounded-br-sm'
-                      : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                      ? 'bg-black text-white rounded-br-sm dark:bg-cyan-500 dark:text-slate-950'
+                      : 'bg-gray-100 text-gray-900 rounded-bl-sm dark:bg-slate-800 dark:text-slate-100'
                   }`}
                 >
                   {msg.content ||
@@ -118,7 +118,7 @@ export default function AITutor({ lessonContext, terminalContext }: Props) {
                       ''
                     ))}
                 </span>
-                <span className="text-[10px] text-gray-400 mt-1 px-1">
+                <span className="text-[10px] text-gray-400 mt-1 px-1 dark:text-slate-500">
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
@@ -128,21 +128,21 @@ export default function AITutor({ lessonContext, terminalContext }: Props) {
         </div>
       )}
 
-      {error && <p className="px-4 py-2 text-xs text-red-500">{error}</p>}
+      {error && <p className="px-4 py-2 text-xs text-red-500 dark:text-rose-300">{error}</p>}
 
-      <div className="border-t flex gap-2 p-2">
+      <div className="border-t flex gap-2 p-2 dark:border-slate-700">
         <input
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && send()}
           placeholder="Ask a question..."
-          className="flex-1 border rounded px-3 py-1.5 text-sm outline-none"
+          className="flex-1 border rounded px-3 py-1.5 text-sm outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
         <button
           onClick={() => send()}
           disabled={!input.trim() || loading}
-          className="px-3 py-1.5 bg-black text-white text-sm rounded disabled:opacity-40"
+          className="px-3 py-1.5 bg-black text-white text-sm rounded disabled:opacity-40 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400 transition"
         >
           Ask
         </button>
