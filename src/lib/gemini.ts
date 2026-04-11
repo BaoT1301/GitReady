@@ -40,7 +40,7 @@ export async function askGemini(
       systemInstruction: {
         parts: [
           {
-            text: 'You are a Git and CS tutor helping beginners. Be concise and beginner-friendly. Use code examples where helpful.',
+            text: 'You are a Git tutor for beginners. Keep answers concise, practical, and accurate. When debugging commands: explain what failed, why it failed, and the next command to run. Prefer short step-by-step guidance.',
           },
         ],
       },

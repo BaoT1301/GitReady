@@ -8,12 +8,28 @@ interface ProgressState {
   completedModules: string[]
   completedLessons: string[]   // format: "moduleId/lessonId"
   quizScores: Record<string, number>  // moduleId -> score 0-100
+  terminalPractice: Record<string, {
+    attempts: number
+    recognized: number
+    lastCommand: string
+    updatedAt: number
+  }> // key format: "moduleId/lessonId"
 }
 
 interface ProgressContextValue extends ProgressState {
   markModuleComplete: (moduleId: string) => void
   markLessonComplete: (moduleId: string, lessonId: string) => void
   setQuizScore: (moduleId: string, score: number) => void
+  recordTerminalCommand: (
+    moduleId: string,
+    lessonId: string,
+    input: string,
+    recognized: boolean,
+  ) => void
+  getLessonPractice: (
+    moduleId: string,
+    lessonId: string,
+  ) => { attempts: number; recognized: number; lastCommand: string; updatedAt: number }
   isModuleComplete: (moduleId: string) => boolean
   isLessonComplete: (moduleId: string, lessonId: string) => boolean
   resetProgress: () => void
@@ -27,13 +43,27 @@ const defaultState: ProgressState = {
   completedModules: [],
   completedLessons: [],
   quizScores: {},
+  terminalPractice: {},
 }
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ProgressState>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? JSON.parse(stored) : defaultState
+      if (!stored) return defaultState
+      const parsed = JSON.parse(stored) as Partial<ProgressState>
+      return {
+        completedModules: Array.isArray(parsed.completedModules) ? parsed.completedModules : [],
+        completedLessons: Array.isArray(parsed.completedLessons) ? parsed.completedLessons : [],
+        quizScores:
+          parsed.quizScores && typeof parsed.quizScores === 'object'
+            ? parsed.quizScores
+            : {},
+        terminalPractice:
+          parsed.terminalPractice && typeof parsed.terminalPractice === 'object'
+            ? parsed.terminalPractice
+            : {},
+      }
     } catch {
       return defaultState
     }
@@ -67,6 +97,47 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       quizScores: { ...prev.quizScores, [moduleId]: score },
     }))
 
+  const recordTerminalCommand = (
+    moduleId: string,
+    lessonId: string,
+    input: string,
+    recognized: boolean,
+  ) => {
+    const key = `${moduleId}/${lessonId}`
+    setState(prev => {
+      const existing = prev.terminalPractice[key] ?? {
+        attempts: 0,
+        recognized: 0,
+        lastCommand: '',
+        updatedAt: 0,
+      }
+      return {
+        ...prev,
+        terminalPractice: {
+          ...prev.terminalPractice,
+          [key]: {
+            attempts: existing.attempts + 1,
+            recognized: existing.recognized + (recognized ? 1 : 0),
+            lastCommand: input,
+            updatedAt: Date.now(),
+          },
+        },
+      }
+    })
+  }
+
+  const getLessonPractice = (moduleId: string, lessonId: string) => {
+    const key = `${moduleId}/${lessonId}`
+    return (
+      state.terminalPractice[key] ?? {
+        attempts: 0,
+        recognized: 0,
+        lastCommand: '',
+        updatedAt: 0,
+      }
+    )
+  }
+
   const isModuleComplete = (moduleId: string) =>
     state.completedModules.includes(moduleId)
 
@@ -82,6 +153,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         markModuleComplete,
         markLessonComplete,
         setQuizScore,
+        recordTerminalCommand,
+        getLessonPractice,
         isModuleComplete,
         isLessonComplete,
         resetProgress,

@@ -1,14 +1,19 @@
-// TERMINAL SIMULATOR — Artigun
-// TODO: style the terminal shell
-// TODO: add arrow-key command history
-// TODO: add any other UX improvements you want
+// TERMINAL SIMULATOR - Artigun + Bao
+// Includes command validation and stateful behavior for core Git workflows.
 
 import { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import type { TerminalCommand } from '../data/modules'
 
+export interface TerminalCommandEvent {
+  input: string
+  recognized: boolean
+  output: string
+  hint?: string
+}
+
 interface Props {
   commands?: TerminalCommand[]
-  onCommand?: (input: string, recognized: boolean) => void
+  onCommand?: (event: TerminalCommandEvent) => void
 }
 
 interface HistoryEntry {
@@ -16,21 +21,43 @@ interface HistoryEntry {
   text: string
 }
 
+const DEFAULT_HINT = 'Type "help" to see available commands for this lesson.'
+
 export default function Terminal({ commands = [], onCommand }: Props) {
   const [history, setHistory] = useState<HistoryEntry[]>([
     { type: 'output', text: 'Type "help" to see available commands.' },
   ])
   const [input, setInput] = useState('')
   const [staged, setStaged] = useState<string[]>([])
-  // tracks all branches that exist (start with just main like a real repo)
   const [branches, setBranches] = useState<string[]>(['main'])
-  // tracks which branch the user is currently on so git branch always shows the right *
   const [currentBranch, setCurrentBranch] = useState('main')
+  const [commandHistory, setCommandHistory] = useState<string[]>([])
+  const [historyIndex, setHistoryIndex] = useState<number | null>(null)
+  const [repoInitialized, setRepoInitialized] = useState(true)
+  const [hasRemote, setHasRemote] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [history])
+
+  const emit = (event: TerminalCommandEvent) => {
+    onCommand?.(event)
+  }
+
+  const append = (type: HistoryEntry['type'], text: string) => {
+    if (!text) return
+    setHistory(h => [...h, { type, text }])
+  }
+
+  const lessonHint = () => {
+    if (!commands.length) return DEFAULT_HINT
+    const sample = commands
+      .slice(0, 4)
+      .map(c => c.input)
+      .join(', ')
+    return `Try: ${sample}${commands.length > 4 ? ', ...' : ''}`
+  }
 
   const runCommand = (raw: string) => {
     const cmd = raw.trim()
@@ -38,80 +65,266 @@ export default function Terminal({ commands = [], onCommand }: Props) {
 
     setHistory(h => [...h, { type: 'input', text: cmd }])
     setInput('')
+    setCommandHistory(prev => [...prev, cmd])
+    setHistoryIndex(null)
 
-    if (cmd === 'clear') { setHistory([]); return }
+    if (cmd === 'clear') {
+      setHistory([])
+      emit({ input: cmd, recognized: true, output: 'Terminal cleared.' })
+      return
+    }
 
     if (cmd === 'help') {
       const list = commands.length
         ? commands.map(c => `  ${c.input}`).join('\n')
         : '  (no commands for this lesson)'
-      setHistory(h => [...h, { type: 'output', text: `Available:\n${list}` }])
+      const output = `Available:\n${list}`
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
       return
     }
 
-    if (cmd.startsWith('git add ')) {
-      const file = cmd.slice('git add '.length).trim()
-      setStaged(s => s.includes(file) ? s : [...s, file])
-      onCommand?.(cmd, true)
+    if (cmd === 'git init') {
+      const output = repoInitialized
+        ? 'Reinitialized existing Git repository in ./'
+        : 'Initialized empty Git repository in ./'
+      setRepoInitialized(true)
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
+      return
+    }
+
+    if (cmd.startsWith('git clone')) {
+      const url = cmd.slice('git clone'.length).trim()
+      if (!url) {
+        const output = 'fatal: You must specify a repository to clone.'
+        const hint = 'Example: git clone https://github.com/org/repo.git'
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint })
+        return
+      }
+      setRepoInitialized(true)
+      setHasRemote(true)
+      const output = `Cloning into '${url.split('/').pop()?.replace(/\\.git$/, '') || 'repo'}'...\nDone.`
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
+      return
+    }
+
+    if (cmd.startsWith('git add')) {
+      const file = cmd.slice('git add'.length).trim()
+      if (!file) {
+        const output = 'Nothing specified, nothing added.'
+        const hint = 'Add a file name, for example: git add README.md'
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint })
+        return
+      }
+      setStaged(s => (s.includes(file) ? s : [...s, file]))
+      emit({ input: cmd, recognized: true, output: '' })
+      return
+    }
+
+    if (cmd.startsWith('git commit')) {
+      if (!repoInitialized) {
+        const output = 'fatal: not a git repository (or any of the parent directories): .git'
+        const hint = 'Run git init first.'
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint })
+        return
+      }
+
+      if (staged.length === 0) {
+        const output = 'nothing to commit, working tree clean'
+        const hint = 'Stage files first, for example: git add <file>'
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint })
+        return
+      }
+
+      const msgMatch = cmd.match(/^git commit -m\s+["'](.+)["']$/)
+      if (!msgMatch) {
+        const output = 'Aborting commit due to empty commit message.'
+        const hint = 'Use: git commit -m "your message"'
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint })
+        return
+      }
+
+      const message = msgMatch[1]
+      const output = `[${currentBranch} abc1234] ${message}\n ${staged.length} file(s) changed`
+      setStaged([])
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
       return
     }
 
     if (cmd.startsWith('git checkout -b ')) {
       const newBranch = cmd.slice('git checkout -b '.length).trim()
-      // add the new branch to state only if it doesn't already exist
-      setBranches(b => b.includes(newBranch) ? b : [...b, newBranch])
-      // update current branch so future git branch calls show the right *
+      if (!newBranch) {
+        const output = 'fatal: invalid branch name'
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint: 'Use: git checkout -b <branch-name>' })
+        return
+      }
+      const alreadyExists = branches.includes(newBranch)
+      setBranches(prev => (alreadyExists ? prev : [...prev, newBranch]))
       setCurrentBranch(newBranch)
-      // build the branch list manually here because setBranches is async —
-      // if we read branches right after calling setBranches it would still be stale
-      const branchList = [...branches, newBranch]
-      const branchOutput = `Switched to a new branch '${newBranch}'\n` +
-        branchList.map(b => b === newBranch ? `* ${b}` : `  ${b}`).join('\n')
-      setHistory(h => [...h, { type: 'output', text: branchOutput }])
-      onCommand?.(cmd, true)
+      const branchList = alreadyExists ? branches : [...branches, newBranch]
+      const output = alreadyExists
+        ? `Switched to branch '${newBranch}'`
+        : `Switched to a new branch '${newBranch}'\n${branchList
+            .map(b => (b === newBranch ? `* ${b}` : `  ${b}`))
+            .join('\n')}`
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
       return
     }
 
     if (cmd.startsWith('git checkout ')) {
       const target = cmd.slice('git checkout '.length).trim()
       if (branches.includes(target)) {
-        // switch to the existing branch and update state so git branch reflects it
         setCurrentBranch(target)
-        setHistory(h => [...h, { type: 'output', text: `Switched to branch '${target}'` }])
-        onCommand?.(cmd, true)
+        const output = `Switched to branch '${target}'`
+        append('output', output)
+        emit({ input: cmd, recognized: true, output })
       } else {
-        // branch doesn't exist — show a real git-style error
-        setHistory(h => [...h, { type: 'error', text: `error: pathspec '${target}' did not match any branch` }])
-        onCommand?.(cmd, false)
+        const output = `error: pathspec '${target}' did not match any branch`
+        append('error', output)
+        emit({
+          input: cmd,
+          recognized: false,
+          output,
+          hint: 'Run git branch to see available branches.',
+        })
       }
       return
     }
 
     if (cmd === 'git branch') {
-      // dynamically build output from state instead of static module data
-      // this is what fixes the bug — currentBranch persists across commands
-      const branchOutput = branches.map(b => b === currentBranch ? `* ${b}` : `  ${b}`).join('\n')
-      setHistory(h => [...h, { type: 'output', text: branchOutput }])
-      onCommand?.(cmd, true)
+      const output = branches.map(b => (b === currentBranch ? `* ${b}` : `  ${b}`)).join('\n')
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
       return
     }
 
-    const match = cmd === 'git status'
-      ? commands.filter(c => c.input === 'git status')[staged.length > 0 ? 1 : 0]
-      : commands.find(c => c.input === cmd)
+    if (cmd.startsWith('git merge')) {
+      const target = cmd.slice('git merge'.length).trim()
+      if (!target) {
+        const output = 'merge: missing branch name'
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint: 'Use: git merge <branch-name>' })
+        return
+      }
+      if (!branches.includes(target)) {
+        const output = `merge: ${target} - not something we can merge`
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint: 'Check branch names with git branch.' })
+        return
+      }
+      if (target === currentBranch) {
+        const output = 'Already up to date.'
+        append('output', output)
+        emit({ input: cmd, recognized: true, output })
+        return
+      }
+      const output = `Updating abc1111..abc2222\nFast-forward\nMerged '${target}' into '${currentBranch}'.`
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
+      return
+    }
+
+    const match =
+      cmd === 'git status'
+        ? commands.filter(c => c.input === 'git status')[staged.length > 0 ? 1 : 0]
+        : commands.find(c => c.input === cmd)
+
+    if (cmd === 'git status' && !match) {
+      const output =
+        staged.length > 0
+          ? `On branch ${currentBranch}\nChanges to be committed:\n  ${staged.join('\n  ')}`
+          : `On branch ${currentBranch}\nnothing to commit, working tree clean`
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
+      return
+    }
+
+    if (cmd.startsWith('git push')) {
+      if (!hasRemote) {
+        const output = "fatal: 'origin' does not appear to be a git repository"
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint: 'Set a remote first: git remote add origin <url>' })
+        return
+      }
+      const output = match?.output || 'Everything up-to-date'
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
+      return
+    }
+
+    if (cmd.startsWith('git pull')) {
+      if (!hasRemote) {
+        const output = 'There is no tracking information for the current branch.'
+        append('error', output)
+        emit({ input: cmd, recognized: false, output, hint: 'Set a remote first: git remote add origin <url>' })
+        return
+      }
+      const output = match?.output || 'Already up to date.'
+      append('output', output)
+      emit({ input: cmd, recognized: true, output })
+      return
+    }
 
     if (match) {
-      if (match.output) setHistory(h => [...h, { type: 'output', text: match.output }])
-      onCommand?.(cmd, true)
-    } else {
-      setHistory(h => [...h, { type: 'error', text: `command not found: ${cmd}` }])
-      onCommand?.(cmd, false)
+      if (match.output) append('output', match.output)
+      emit({ input: cmd, recognized: true, output: match.output || '' })
+      return
     }
+
+    if (cmd.startsWith('git ')) {
+      const output = `Unknown or unsupported git command: ${cmd}`
+      const hint = lessonHint()
+      append('error', output)
+      emit({ input: cmd, recognized: false, output, hint })
+      return
+    }
+
+    const output = `command not found: ${cmd}`
+    append('error', output)
+    emit({ input: cmd, recognized: false, output, hint: lessonHint() })
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') runCommand(input)
-    // TODO: arrow up/down for history
+    if (e.key === 'Enter') {
+      runCommand(input)
+      return
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (!commandHistory.length) return
+      setHistoryIndex(prev => {
+        const next = prev === null ? commandHistory.length - 1 : Math.max(0, prev - 1)
+        setInput(commandHistory[next])
+        return next
+      })
+      return
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (!commandHistory.length) return
+      setHistoryIndex(prev => {
+        if (prev === null) return null
+        const next = prev + 1
+        if (next >= commandHistory.length) {
+          setInput('')
+          return null
+        }
+        setInput(commandHistory[next])
+        return next
+      })
+    }
   }
 
   return (
@@ -134,7 +347,10 @@ export default function Terminal({ commands = [], onCommand }: Props) {
         <input
           type="text"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={e => {
+            setInput(e.target.value)
+            setHistoryIndex(null)
+          }}
           onKeyDown={onKeyDown}
           className="flex-1 bg-transparent outline-none text-white placeholder-gray-600"
           placeholder="type a command..."
