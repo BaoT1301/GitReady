@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { SignInButton, UserButton, useAuth } from '@clerk/clerk-react'
 
 const THEME_KEY = 'gitready_theme'
 
@@ -24,6 +25,7 @@ export default function Navbar() {
   }
 
   const isDark = theme === 'dark'
+  const { isSignedIn } = useAuth()
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     [
@@ -76,6 +78,19 @@ export default function Navbar() {
               />
             </span>
           </button>
+
+          {isSignedIn ? (
+            <UserButton />
+          ) : (
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="inline-flex h-9 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-700"
+              >
+                Sign In
+              </button>
+            </SignInButton>
+          )}
         </div>
       </div>
     </nav>
