@@ -6,6 +6,8 @@ import { useProgress } from '../context/ProgressContext'
 import Terminal, { TerminalCommandEvent } from '../components/Terminal'
 import Quiz from '../components/Quiz'
 import AITutor from '../components/AITutor'
+import GitVisualizer from '../components/GitVisualizer'
+
 
 const LAST_LESSON_STORAGE_KEY = 'gitready_last_lesson_by_module'
 
@@ -270,6 +272,13 @@ export default function ModulePage() {
                 <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:rounded-lg prose-pre:bg-slate-950 prose-code:before:content-[''] prose-code:after:content-['']">
                   <ReactMarkdown>{lesson.content}</ReactMarkdown>
                 </div>
+              </section>
+
+              <section className="rounded-2xl border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-cyan-600 dark:text-cyan-400">
+                  Interactive Visualizer
+                </p>
+                <GitVisualizer moduleId={module.id} />
               </section>
 
               {lesson.terminalCommands && lesson.terminalCommands.length > 0 && (
