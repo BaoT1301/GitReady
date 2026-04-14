@@ -12,6 +12,7 @@ export default function Quiz({ questions, onComplete }: Props) {
   const [answers, setAnswers] = useState<Record<string, number>>({})
   const [submitted, setSubmitted] = useState(false)
   const [score, setScore] = useState(0)
+  const passingScore = 70
 
   const handleSubmit = () => {
     const correct = questions.filter(q => answers[q.id] === q.correctIndex).length
@@ -72,15 +73,30 @@ export default function Quiz({ questions, onComplete }: Props) {
           Submit
         </button>
       ) : (
-        <div className="flex items-center gap-4">
-          <p className="text-sm font-medium dark:text-slate-200">
-            Score: {score}% ({questions.filter(q => answers[q.id] === q.correctIndex).length} / {questions.length} correct)
-          </p>
+        <div className="space-y-3">
+          <div
+            className={`rounded-lg border px-3 py-2 text-sm ${
+              score >= passingScore
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+                : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200'
+            }`}
+          >
+            <p className="font-semibold">
+              {score >= passingScore ? 'Passed' : 'Not passed yet'}: {score}%
+            </p>
+            <p className="text-xs">
+              {questions.filter(q => answers[q.id] === q.correctIndex).length} / {questions.length} correct
+              {score >= passingScore
+                ? ' - Great work. You can move to the next module.'
+                : ' - Review explanations and try again to reach 70%.'}
+            </p>
+          </div>
+
           <button
             onClick={handleRetry}
             className="px-4 py-2 bg-gray-200 text-gray-800 text-sm rounded dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
           >
-            Try Again!
+            Try Again
           </button>
         </div>
       )}

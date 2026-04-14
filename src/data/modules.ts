@@ -827,4 +827,528 @@ nothing to commit, working tree clean`,
       },
     ],
   },
+  {
+    id: 'pull-requests',
+    title: 'GitHub Pull Requests',
+    description: 'Open pull requests, request review, and merge changes safely.',
+    icon: '📬',
+    difficulty: 'intermediate',
+    lessons: [
+      {
+        id: 'pr-workflow',
+        title: 'The Pull Request Workflow',
+        content: `📌 What is a Pull Request?
+
+A pull request (PR) is how teams propose changes before merging code into the main branch.
+
+Instead of pushing directly to main, you:
+- create a feature branch
+- push that branch to GitHub
+- open a PR so teammates can review
+
+---
+
+📌 Why Pull Requests Matter
+
+PRs help teams:
+- catch bugs early during review
+- discuss code decisions before merge
+- keep main branch stable
+
+This is the standard workflow used in internships and professional teams.
+
+---
+
+📌 Typical PR Flow
+
+1. Create a branch for your feature
+2. Commit your changes locally
+3. Push your branch to GitHub
+4. Open a pull request
+5. Address review comments
+6. Merge after approval
+
+---
+
+🧪 Try it in the terminal:
+
+git checkout -b feature-profile
+git push origin feature-profile
+gh pr create --title "Add profile page" --body "Implements profile page UI and routing."
+gh pr view
+
+---
+
+🎯 Goal
+
+You should understand how a branch becomes a reviewed PR and then gets merged into main.`,
+        terminalCommands: [
+          {
+            input: 'git checkout -b feature-profile',
+            output: `Switched to a new branch 'feature-profile'
+  main
+* feature-profile`,
+          },
+          {
+            input: 'git push origin feature-profile',
+            output: `Enumerating objects: 8, done.
+Counting objects: 100% (8/8), done.
+Writing objects: 100% (5/5), 612 bytes | 612.00 KiB/s, done.
+To https://github.com/team/gitready.git
+ * [new branch]      feature-profile -> feature-profile`,
+          },
+          {
+            input: 'gh pr create --title "Add profile page" --body "Implements profile page UI and routing."',
+            output: `Creating pull request for feature-profile into main...
+https://github.com/team/gitready/pull/27`,
+          },
+          {
+            input: 'gh pr view',
+            output: `title: Add profile page
+state: OPEN
+reviewers: requested
+url: https://github.com/team/gitready/pull/27`,
+          },
+        ],
+      },
+    ],
+    quiz: [
+      {
+        id: 'q1',
+        question: 'What is the main purpose of a pull request?',
+        options: [
+          'Delete old branches automatically',
+          'Propose changes for review before merging',
+          'Replace git commit',
+          'Run tests locally',
+        ],
+        correctIndex: 1,
+        explanation: 'A pull request is used to propose code changes and get feedback before merging into the main branch.',
+      },
+      {
+        id: 'q2',
+        question: 'Which branch should you open a PR from?',
+        options: [
+          'A feature branch with your changes',
+          'Only the main branch',
+          'Any deleted branch',
+          'The oldest branch in the repo',
+        ],
+        correctIndex: 0,
+        explanation: 'You open PRs from a feature branch into a target branch such as main.',
+      },
+      {
+        id: 'q3',
+        question: 'Why do teams review pull requests?',
+        options: [
+          'To slow down development',
+          'To increase file size',
+          'To catch issues and discuss code quality',
+          'To avoid using GitHub',
+        ],
+        correctIndex: 2,
+        explanation: 'PR review helps identify bugs, improve code quality, and align the team on implementation choices.',
+      },
+      {
+        id: 'q4',
+        question: 'What usually happens before a PR is merged?',
+        options: [
+          'The branch is deleted first',
+          'At least one reviewer approves it',
+          'All commits are removed',
+          'Git resets main automatically',
+        ],
+        correctIndex: 1,
+        explanation: 'Most team workflows require review and approval before merging a pull request.',
+      },
+      {
+        id: 'q5',
+        question: 'Which command below is commonly used to create a PR from terminal?',
+        options: [
+          'git pr open',
+          'gh pr create',
+          'git merge request',
+          'github push --pr',
+        ],
+        correctIndex: 1,
+        explanation: 'The GitHub CLI command `gh pr create` is commonly used to open a pull request from terminal.',
+      },
+    ],
+  },
+  {
+    id: 'merge-conflicts',
+    title: 'Resolving Merge Conflicts',
+    description: 'Learn a reliable workflow to resolve conflicts without losing work.',
+    icon: '⚔️',
+    difficulty: 'intermediate',
+    lessons: [
+      {
+        id: 'conflict-basics',
+        title: 'Fixing Conflicts Step by Step',
+        content: `📌 What is a merge conflict?
+
+A merge conflict happens when two branches changed the same part of a file, and Git cannot auto-merge.
+
+This is normal in team projects.
+
+---
+
+📌 Conflict workflow
+
+1. Run merge and see conflicted files
+2. Open files and keep the correct final code
+3. Stage resolved files
+4. Complete merge commit
+
+---
+
+🧪 Try it in the terminal:
+
+git merge feature-login
+git status
+git add app.js
+git status
+
+---
+
+🎯 Goal
+
+You should be able to identify a conflict and move toward a clean merge.`,
+        terminalCommands: [
+          {
+            input: 'git merge feature-login',
+            output: `Auto-merging app.js
+CONFLICT (content): Merge conflict in app.js
+Automatic merge failed; fix conflicts and then commit the result.`,
+          },
+          {
+            input: 'git status',
+            output: `On branch main
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+Unmerged paths:
+  both modified:   app.js`,
+          },
+          {
+            input: 'git add app.js',
+            output: ``,
+          },
+          {
+            input: 'git status',
+            output: `On branch main
+All conflicts fixed but you are still merging.
+  (use "git commit" to conclude merge)`,
+          },
+        ],
+      },
+    ],
+    quiz: [
+      {
+        id: 'q1',
+        question: 'When does a merge conflict happen?',
+        options: [
+          'When a repository has no branches',
+          'When two branches edit the same code and Git cannot choose automatically',
+          'When git status is run too often',
+          'When a commit message is too short',
+        ],
+        correctIndex: 1,
+        explanation: 'Conflicts happen when overlapping edits cannot be merged automatically.',
+      },
+      {
+        id: 'q2',
+        question: 'What is a safe first step after conflict appears?',
+        options: [
+          'Delete the project',
+          'Run git push immediately',
+          'Check conflicted files and resolve them carefully',
+          'Reset all branches',
+        ],
+        correctIndex: 2,
+        explanation: 'Inspect and resolve the conflicted files before finishing the merge.',
+      },
+      {
+        id: 'q3',
+        question: 'What does git add do after you fix a conflicted file?',
+        options: [
+          'Deletes conflict history',
+          'Marks the file as resolved and staged',
+          'Creates a new branch',
+          'Skips the merge commit',
+        ],
+        correctIndex: 1,
+        explanation: 'After editing the file, git add marks that conflict as resolved.',
+      },
+      {
+        id: 'q4',
+        question: 'Why should teams communicate during conflicts?',
+        options: [
+          'To avoid duplicate work and wrong resolutions',
+          'To increase merge errors',
+          'To avoid using Git',
+          'To delete old commits',
+        ],
+        correctIndex: 0,
+        explanation: 'Good communication reduces conflict frequency and bad merges.',
+      },
+      {
+        id: 'q5',
+        question: 'After all conflict files are staged, what usually comes next?',
+        options: [
+          'git clone',
+          'git commit to complete the merge',
+          'git init',
+          'git branch -D main',
+        ],
+        correctIndex: 1,
+        explanation: 'You normally finish by creating the merge commit.',
+      },
+    ],
+  },
+  {
+    id: 'rebase-history',
+    title: 'Rebase & Clean History',
+    description: 'Hard module: rewrite local history to keep commit timeline clear.',
+    icon: '🧭',
+    difficulty: 'advanced',
+    lessons: [
+      {
+        id: 'rebase-flow',
+        title: 'Linear History with Rebase',
+        content: `📌 Why rebase?
+
+Rebase moves your local commits on top of the latest base branch so history stays linear and easier to read.
+
+This is a harder workflow and should be used carefully.
+
+---
+
+📌 Common uses
+
+- update your feature branch with latest main
+- clean commit history before opening a PR
+
+---
+
+🧪 Try it in the terminal:
+
+git checkout feature-search
+git rebase main
+git rebase -i HEAD~3
+git log --oneline --graph
+
+---
+
+🎯 Goal
+
+Understand when and why teams use rebase for cleaner history.`,
+        terminalCommands: [
+          {
+            input: 'git checkout feature-search',
+            output: `Switched to branch 'feature-search'`,
+          },
+          {
+            input: 'git rebase main',
+            output: `Successfully rebased and updated refs/heads/feature-search.`,
+          },
+          {
+            input: 'git rebase -i HEAD~3',
+            output: `Interactive rebase started.
+pick a12b3c4 Add search input
+pick b34c5d6 Improve search results
+pick c56d7e8 Fix search styles`,
+          },
+          {
+            input: 'git log --oneline --graph',
+            output: `* f8a9b0c Refine search UX
+* e7a8b9c Add search feature
+* 9c8d7e6 Update main branch`,
+          },
+        ],
+      },
+    ],
+    quiz: [
+      {
+        id: 'q1',
+        question: 'What is the main goal of rebase?',
+        options: [
+          'Delete all old commits',
+          'Create a cleaner, linear history',
+          'Replace pull requests',
+          'Skip code review',
+        ],
+        correctIndex: 1,
+        explanation: 'Rebase is often used to keep history linear and easier to understand.',
+      },
+      {
+        id: 'q2',
+        question: 'When is interactive rebase commonly used?',
+        options: [
+          'To rewrite and clean local commits before sharing',
+          'To deploy to production',
+          'To initialize a repo',
+          'To delete remote branches',
+        ],
+        correctIndex: 0,
+        explanation: 'Interactive rebase lets you edit, squash, or reorder local commits.',
+      },
+      {
+        id: 'q3',
+        question: 'Why is this considered a hard module?',
+        options: [
+          'Because rebase can rewrite commit history',
+          'Because it only works on Linux',
+          'Because it requires GitHub premium',
+          'Because rebase has no documentation',
+        ],
+        correctIndex: 0,
+        explanation: 'Rewriting history is powerful but risky if used carelessly on shared commits.',
+      },
+      {
+        id: 'q4',
+        question: 'What command shows a compact branch graph?',
+        options: [
+          'git log --oneline --graph',
+          'git status --graph',
+          'git checkout --graph',
+          'git add --graph',
+        ],
+        correctIndex: 0,
+        explanation: 'That log command is a common way to visualize commit flow quickly.',
+      },
+      {
+        id: 'q5',
+        question: 'What should you avoid rebasing?',
+        options: [
+          'Local unpublished commits',
+          'Shared commits that teammates already pulled',
+          'Feature branches',
+          'Small commits',
+        ],
+        correctIndex: 1,
+        explanation: 'Avoid rebasing shared history because it can break teammate sync.',
+      },
+    ],
+  },
+  {
+    id: 'undoing-mistakes',
+    title: 'Undoing Mistakes Safely',
+    description: 'Hard module: recover from mistakes with restore, reset, revert, and reflog.',
+    icon: '🛟',
+    difficulty: 'advanced',
+    lessons: [
+      {
+        id: 'undo-workflow',
+        title: 'Choose the Right Undo Command',
+        content: `📌 Not every mistake is the same
+
+Git has different undo tools depending on what you want to fix.
+
+- restore: unstage or discard file changes
+- reset: move HEAD (often local-only workflow)
+- revert: create a new commit that undoes an old commit
+- reflog: find previous states when you are lost
+
+---
+
+🧪 Try it in the terminal:
+
+git restore --staged app.js
+git reset --soft HEAD~1
+git revert a1b2c3d
+git reflog
+
+---
+
+🎯 Goal
+
+Understand the safest command for each mistake instead of using one command for everything.`,
+        terminalCommands: [
+          {
+            input: 'git restore --staged app.js',
+            output: `Unstaged changes after reset:
+M       app.js`,
+          },
+          {
+            input: 'git reset --soft HEAD~1',
+            output: `HEAD is now at 4f9a2c1 Previous commit.
+Changes from the last commit are now staged.`,
+          },
+          {
+            input: 'git revert a1b2c3d',
+            output: `[main b7c8d9e] Revert "Add unstable payment flow"
+ 1 file changed, 14 deletions(-)`,
+          },
+          {
+            input: 'git reflog',
+            output: `b7c8d9e HEAD@{0}: revert: Revert "Add unstable payment flow"
+4f9a2c1 HEAD@{1}: reset: moving to HEAD~1
+a1b2c3d HEAD@{2}: commit: Add unstable payment flow`,
+          },
+        ],
+      },
+    ],
+    quiz: [
+      {
+        id: 'q1',
+        question: 'Which command is safest for undoing a shared commit?',
+        options: [
+          'git revert',
+          'git reset --hard',
+          'git branch -D',
+          'git clean -fd',
+        ],
+        correctIndex: 0,
+        explanation: 'git revert keeps history intact by creating a new undo commit.',
+      },
+      {
+        id: 'q2',
+        question: 'What does git restore --staged file do?',
+        options: [
+          'Deletes the file',
+          'Removes the file from the staging area',
+          'Pushes the file to remote',
+          'Creates a new branch',
+        ],
+        correctIndex: 1,
+        explanation: 'It unstages the file while keeping your local file changes.',
+      },
+      {
+        id: 'q3',
+        question: 'What is reflog mainly used for?',
+        options: [
+          'Viewing only remote commits',
+          'Finding previous HEAD states for recovery',
+          'Creating pull requests',
+          'Running merge tests',
+        ],
+        correctIndex: 1,
+        explanation: 'reflog helps recover from mistakes by showing where HEAD moved.',
+      },
+      {
+        id: 'q4',
+        question: 'Why is reset considered risky?',
+        options: [
+          'It can rewrite history depending on mode',
+          'It always deletes remotes',
+          'It requires internet access',
+          'It turns off Git tracking',
+        ],
+        correctIndex: 0,
+        explanation: 'Some reset modes rewrite or discard history/state, so use carefully.',
+      },
+      {
+        id: 'q5',
+        question: 'Which mindset is best for undoing mistakes?',
+        options: [
+          'Use reset --hard for everything',
+          'Choose command based on whether changes are staged, committed, or shared',
+          'Delete and reclone the repo',
+          'Never use undo commands',
+        ],
+        correctIndex: 1,
+        explanation: 'Choosing the right tool based on context is the safe and professional approach.',
+      },
+    ],
+  },
 ]

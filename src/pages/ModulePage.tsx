@@ -1,10 +1,5 @@
-// LESSON PAGE - Artigun + Bao
-// TODO: render lesson markdown properly instead of raw whitespace-pre
-// TODO: polish the two-column layout (sidebar + content)
-// TODO: add any transitions or UX improvements between lessons
-
-import { useMemo, useState } from 'react'
-import { useParams, Link, Navigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams, Link, Navigate, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { modules } from '../data/modules'
 import { useProgress } from '../context/ProgressContext'
@@ -12,8 +7,11 @@ import Terminal, { TerminalCommandEvent } from '../components/Terminal'
 import Quiz from '../components/Quiz'
 import AITutor from '../components/AITutor'
 
+const LAST_LESSON_STORAGE_KEY = 'gitready_last_lesson_by_module'
+
 export default function ModulePage() {
   const { moduleId } = useParams<{ moduleId: string }>()
+  const navigate = useNavigate()
   const module = modules.find(m => m.id === moduleId)
 
   const {
@@ -29,6 +27,40 @@ export default function ModulePage() {
   const [showQuiz, setShowQuiz] = useState(false)
   const [recentTerminalEvents, setRecentTerminalEvents] = useState<TerminalCommandEvent[]>([])
   const [contentVisible, setContentVisible] = useState(true)
+
+  useEffect(() => {
+    if (!module) return
+
+    try {
+      const raw = localStorage.getItem(LAST_LESSON_STORAGE_KEY)
+      const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {}
+      const savedIndex = parsed[module.id]
+
+      if (typeof savedIndex === 'number' && savedIndex >= 0 && savedIndex < module.lessons.length) {
+        setActiveLessonIndex(savedIndex)
+      } else {
+        setActiveLessonIndex(0)
+      }
+    } catch {
+      setActiveLessonIndex(0)
+    }
+
+    setShowQuiz(false)
+    setRecentTerminalEvents([])
+  }, [module?.id])
+
+  useEffect(() => {
+    if (!module) return
+
+    try {
+      const raw = localStorage.getItem(LAST_LESSON_STORAGE_KEY)
+      const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {}
+      parsed[module.id] = activeLessonIndex
+      localStorage.setItem(LAST_LESSON_STORAGE_KEY, JSON.stringify(parsed))
+    } catch {
+      // ignore localStorage errors
+    }
+  }, [activeLessonIndex, module?.id])
 
   if (!module) return <Navigate to="/modules" replace />
 
@@ -46,18 +78,28 @@ export default function ModulePage() {
     }, 150)
   }
 
+  const openQuiz = () => {
+    setContentVisible(false)
+    window.setTimeout(() => {
+      setShowQuiz(true)
+      setRecentTerminalEvents([])
+      setContentVisible(true)
+    }, 150)
+  }
+
   const handleNext = () => {
     markLessonComplete(module.id, lesson.id)
 
     if (activeLessonIndex < module.lessons.length - 1) {
       switchLesson(activeLessonIndex + 1)
     } else {
-      setContentVisible(false)
-      window.setTimeout(() => {
-        setShowQuiz(true)
-        setRecentTerminalEvents([])
-        setContentVisible(true)
-      }, 150)
+      openQuiz()
+    }
+  }
+
+  const handlePrevious = () => {
+    if (activeLessonIndex > 0) {
+      switchLesson(activeLessonIndex - 1)
     }
   }
 
@@ -99,14 +141,40 @@ export default function ModulePage() {
   const completedLessons = module.lessons.filter(l => isLessonComplete(module.id, l.id)).length
   const progressPercent = Math.round((completedLessons / module.lessons.length) * 100)
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+    navigate('/modules')
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-      <div className="mb-6 text-sm text-gray-500 dark:text-slate-400">
-        <Link to="/modules" className="hover:underline">
-          Modules
-        </Link>
-        {' / '}
-        <span className="text-gray-700 dark:text-slate-200">{module.title}</span>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm text-gray-500 dark:text-slate-400">
+          <Link to="/modules" className="hover:underline">
+            Modules
+          </Link>
+          {' / '}
+          <span className="text-gray-700 dark:text-slate-200">{module.title}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            Back
+          </button>
+          <Link
+            to="/modules"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            Return to Modules
+          </Link>
+        </div>
       </div>
 
       <div className="mb-8 rounded-2xl border bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -160,28 +228,17 @@ export default function ModulePage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-slate-400">
-                          Lesson {i + 1}
-                        </p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">Lesson {i + 1}</p>
                         <p className="text-sm font-medium">{l.title}</p>
                       </div>
-                      <span className="text-xs">
-                        {complete ? '✓' : ''}
-                      </span>
+                      <span className="text-xs">{complete ? 'Done' : ''}</span>
                     </div>
                   </button>
                 )
               })}
 
               <button
-                onClick={() => {
-                  setContentVisible(false)
-                  window.setTimeout(() => {
-                    setShowQuiz(true)
-                    setRecentTerminalEvents([])
-                    setContentVisible(true)
-                  }, 150)
-                }}
+                onClick={openQuiz}
                 className={`w-full rounded-xl border px-3 py-3 text-left transition ${
                   showQuiz
                     ? 'border-cyan-500 bg-cyan-50 text-cyan-900 dark:border-cyan-400 dark:bg-cyan-500/10 dark:text-cyan-100'
@@ -246,23 +303,33 @@ export default function ModulePage() {
                 <AITutor lessonContext={lesson.content} terminalContext={terminalContext} />
               </section>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-gray-500 dark:text-slate-400">
                   {isLessonComplete(module.id, lesson.id) ? 'Completed' : 'In progress'}
                 </p>
 
-                <button
-                  onClick={handleNext}
-                  className="rounded-xl bg-black px-4 py-2 text-sm text-white transition hover:opacity-90 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
-                >
-                  {activeLessonIndex < module.lessons.length - 1 ? 'Next lesson →' : 'Take quiz →'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    disabled={activeLessonIndex === 0}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                  >
+                    Previous lesson
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="rounded-xl bg-black px-4 py-2 text-sm text-white transition hover:opacity-90 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
+                  >
+                    {activeLessonIndex < module.lessons.length - 1 ? 'Next lesson ->' : 'Take quiz ->'}
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
             <div className="space-y-6">
               <section className="rounded-2xl border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                <h2 className="text-2xl font-bold dark:text-slate-100">Quiz — {module.title}</h2>
+                <h2 className="text-2xl font-bold dark:text-slate-100">Quiz - {module.title}</h2>
                 <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
                   Score 70% or higher to complete the module.
                 </p>
@@ -272,12 +339,21 @@ export default function ModulePage() {
                 <Quiz questions={module.quiz} onComplete={handleQuizComplete} />
               </section>
 
-              <Link
-                to="/modules"
-                className="inline-block text-sm text-gray-500 hover:underline dark:text-slate-400"
-              >
-                ← Back to Modules
-              </Link>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => switchLesson(Math.max(0, module.lessons.length - 1))}
+                  className="inline-block text-sm text-gray-500 hover:underline dark:text-slate-400"
+                >
+                  Back to last lesson
+                </button>
+                <Link
+                  to="/modules"
+                  className="inline-block text-sm text-gray-500 hover:underline dark:text-slate-400"
+                >
+                  Back to Modules
+                </Link>
+              </div>
             </div>
           )}
         </main>

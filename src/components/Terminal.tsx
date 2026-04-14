@@ -23,13 +23,30 @@ interface HistoryEntry {
 
 const DEFAULT_HINT = 'Type "help" to see available commands for this lesson.'
 
+function deriveInitialBranches(commands: TerminalCommand[]): string[] {
+  const names = new Set<string>(['main'])
+
+  for (const cmd of commands) {
+    const checkoutCreate = cmd.input.match(/^git checkout -b\s+(.+)$/)
+    if (checkoutCreate?.[1]) names.add(checkoutCreate[1].trim())
+
+    const checkoutExisting = cmd.input.match(/^git checkout\s+(.+)$/)
+    if (checkoutExisting?.[1]) names.add(checkoutExisting[1].trim())
+
+    const mergeTarget = cmd.input.match(/^git merge\s+(.+)$/)
+    if (mergeTarget?.[1]) names.add(mergeTarget[1].trim())
+  }
+
+  return Array.from(names)
+}
+
 export default function Terminal({ commands = [], onCommand }: Props) {
   const [history, setHistory] = useState<HistoryEntry[]>([
     { type: 'output', text: 'Type "help" to see available commands.' },
   ])
   const [input, setInput] = useState('')
   const [staged, setStaged] = useState<string[]>([])
-  const [branches, setBranches] = useState<string[]>(['main'])
+  const [branches, setBranches] = useState<string[]>(() => deriveInitialBranches(commands))
   const [currentBranch, setCurrentBranch] = useState('main')
   const [commandHistory, setCommandHistory] = useState<string[]>([])
   const [historyIndex, setHistoryIndex] = useState<number | null>(null)
@@ -210,6 +227,7 @@ export default function Terminal({ commands = [], onCommand }: Props) {
 
     if (cmd.startsWith('git merge')) {
       const target = cmd.slice('git merge'.length).trim()
+      const scripted = commands.find(c => c.input === cmd)
       if (!target) {
         const output = 'merge: missing branch name'
         append('error', output)
@@ -228,6 +246,13 @@ export default function Terminal({ commands = [], onCommand }: Props) {
         emit({ input: cmd, recognized: true, output })
         return
       }
+
+      if (scripted?.output) {
+        append('output', scripted.output)
+        emit({ input: cmd, recognized: true, output: scripted.output })
+        return
+      }
+
       const output = `Updating abc1111..abc2222\nFast-forward\nMerged '${target}' into '${currentBranch}'.`
       append('output', output)
       emit({ input: cmd, recognized: true, output })
@@ -236,7 +261,12 @@ export default function Terminal({ commands = [], onCommand }: Props) {
 
     const match =
       cmd === 'git status'
-        ? commands.filter(c => c.input === 'git status')[staged.length > 0 ? 1 : 0]
+        ? (() => {
+            const statuses = commands.filter(c => c.input === 'git status')
+            if (statuses.length === 0) return undefined
+            if (staged.length > 0 && statuses[1]) return statuses[1]
+            return statuses[0]
+          })()
         : commands.find(c => c.input === cmd)
 
     if (cmd === 'git status' && !match) {

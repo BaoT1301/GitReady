@@ -1,8 +1,17 @@
 import { Link } from 'react-router-dom'
 import { modules } from '../data/modules'
+import { useProgress } from '../context/ProgressContext'
 
 export default function Landing() {
+  const { isModuleComplete, isLessonComplete } = useProgress()
   const featuredModules = modules.slice(0, 3)
+  const nextModule = modules.find(m => !isModuleComplete(m.id))
+  const nextModuleLessonsDone = nextModule
+    ? nextModule.lessons.filter(l => isLessonComplete(nextModule.id, l.id)).length
+    : 0
+  const nextModuleProgress = nextModule
+    ? Math.round((nextModuleLessonsDone / nextModule.lessons.length) * 100)
+    : 100
 
   return (
     <div className="relative mx-auto w-full max-w-6xl px-6 py-12 md:py-16">
@@ -35,6 +44,36 @@ export default function Landing() {
             View Progress
           </Link>
         </div>
+
+        {nextModule && (
+          <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800/80">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Continue where you left off
+            </p>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">
+                  {nextModule.icon} {nextModule.title}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {nextModuleLessonsDone}/{nextModule.lessons.length} lessons completed
+                </p>
+              </div>
+              <Link
+                to={`/modules/${nextModule.id}`}
+                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+              >
+                Continue
+              </Link>
+            </div>
+            <div className="mt-3 h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+              <div
+                className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-indigo-400"
+                style={{ width: `${nextModuleProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800/85">

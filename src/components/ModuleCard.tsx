@@ -5,6 +5,7 @@ interface Props {
   module: Module
   completed: boolean
   quizScore?: number
+  lessonsCompleted?: number
 }
 
 const difficultyStyles: Record<Module['difficulty'], string> = {
@@ -13,7 +14,10 @@ const difficultyStyles: Record<Module['difficulty'], string> = {
   advanced: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/35 dark:text-rose-300 dark:border-rose-700/70',
 }
 
-export default function ModuleCard({ module, completed, quizScore }: Props) {
+export default function ModuleCard({ module, completed, quizScore, lessonsCompleted = 0 }: Props) {
+  const totalLessons = module.lessons.length
+  const progressPercent = totalLessons === 0 ? 0 : Math.round((lessonsCompleted / totalLessons) * 100)
+
   return (
     <Link
       to={`/modules/${module.id}`}
@@ -37,8 +41,23 @@ export default function ModuleCard({ module, completed, quizScore }: Props) {
       <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{module.description}</p>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 dark:bg-slate-800">{module.lessons.length} lessons</span>
+        <span className="rounded-full bg-slate-100 px-2.5 py-1 dark:bg-slate-800">
+          {lessonsCompleted}/{module.lessons.length} lessons
+        </span>
         {quizScore !== undefined && <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700 dark:bg-cyan-950/60 dark:text-cyan-300">Quiz: {quizScore}%</span>}
+      </div>
+
+      <div className="mt-3">
+        <div className="mb-1 flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          <span>Progress</span>
+          <span>{progressPercent}%</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700">
+          <div
+            className="h-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-indigo-400"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
       </div>
     </Link>
   )
