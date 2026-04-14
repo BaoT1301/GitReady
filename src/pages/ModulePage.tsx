@@ -8,6 +8,48 @@ import Quiz from '../components/Quiz'
 import AITutor from '../components/AITutor'
 import GitVisualizer from '../components/GitVisualizer'
 
+const lessonComponents = {
+  p: ({ children }: { children: React.ReactNode }) => {
+    const text = typeof children === 'string' ? children : ''
+    if (text.startsWith('📌')) {
+      return (
+        <div className="border-l-4 border-cyan-400 bg-cyan-50 px-4 py-3 rounded-r-xl dark:bg-cyan-950/30 dark:border-cyan-500">
+          <p className="text-sm leading-relaxed text-cyan-900 dark:text-cyan-200">{children}</p>
+        </div>
+      )
+    }
+    if (text.startsWith('🧪')) {
+      return (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/30">
+          <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200">{children}</p>
+        </div>
+      )
+    }
+    if (text.startsWith('🎯')) {
+      return (
+        <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-700 dark:bg-emerald-950/30">
+          <p className="text-sm leading-relaxed text-emerald-900 dark:text-emerald-200">{children}</p>
+        </div>
+      )
+    }
+    return <p className="text-sm leading-relaxed text-gray-700 dark:text-slate-300">{children}</p>
+  },
+  ul: ({ children }: { children: React.ReactNode }) => (
+    <ul className="space-y-2">{children}</ul>
+  ),
+  li: ({ children }: { children: React.ReactNode }) => (
+    <li className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-cyan-400" />
+      <span className="text-sm text-gray-700 dark:text-slate-300">{children}</span>
+    </li>
+  ),
+  pre: ({ children }: { children: React.ReactNode }) => (
+    <pre className="overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs text-green-400 font-mono leading-relaxed">{children}</pre>
+  ),
+  code: ({ children }: { children: React.ReactNode }) => (
+    <code className="font-mono text-green-400">{children}</code>
+  ),
+}
 
 const LAST_LESSON_STORAGE_KEY = 'gitready_last_lesson_by_module'
 
@@ -269,8 +311,8 @@ export default function ModulePage() {
               </section>
 
               <section className="rounded-2xl border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:rounded-lg prose-pre:bg-slate-950 prose-code:before:content-[''] prose-code:after:content-['']">
-                  <ReactMarkdown>{lesson.content}</ReactMarkdown>
+                <div className="space-y-3">
+                  <ReactMarkdown components={lessonComponents as any}>{lesson.content}</ReactMarkdown>
                 </div>
               </section>
 

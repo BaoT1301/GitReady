@@ -120,8 +120,10 @@ This is often part of a larger workflow where apps are tested before updates go 
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git --version   # check if Git is installed
 git help        # explore Git commands
+\`\`\`
 
 ---
 
@@ -245,9 +247,11 @@ The staging area lets you:
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git status              # see what files have changed
 git add filters.txt     # stage only the filters changes
 git status              # confirm filters.txt is staged
+\`\`\`
 
 ---
 
@@ -409,9 +413,11 @@ You can switch between branches anytime.
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git branch                 # see all branches (you should see main)
 git checkout -b spotlight  # create a new branch + switch to it
 git branch                 # confirm you are now on spotlight
+\`\`\`
 
 ---
 
@@ -538,8 +544,10 @@ When you merge Spotlight 🌟, the main branch now includes everything plus your
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git checkout main        # switch to main branch (where changes will go)
 git merge spotlight      # bring changes from spotlight into main
+\`\`\`
 
 ---
 
@@ -719,9 +727,11 @@ Git will warn you when that happens so you know to pull before pushing again.
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git push origin main   # send your changes to the remote
 git pull origin main   # get the latest changes from the remote
 git status             # check if your branch is up to date
+\`\`\`
 
 ---
 
@@ -872,10 +882,12 @@ This is the standard workflow used in internships and professional teams.
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git checkout -b feature-profile
 git push origin feature-profile
 gh pr create --title "Add profile page" --body "Implements profile page UI and routing."
 gh pr view
+\`\`\`
 
 ---
 
@@ -1004,10 +1016,12 @@ This is normal in team projects.
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git merge feature-login
 git status
 git add app.js
 git status
+\`\`\`
 
 ---
 
@@ -1132,10 +1146,12 @@ This is a harder workflow and should be used carefully.
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git checkout feature-search
 git rebase main
 git rebase -i HEAD~3
 git log --oneline --graph
+\`\`\`
 
 ---
 
@@ -1253,10 +1269,12 @@ Git has different undo tools depending on what you want to fix.
 
 🧪 Try it in the terminal:
 
+\`\`\`
 git restore --staged app.js
 git reset --soft HEAD~1
 git revert a1b2c3d
 git reflog
+\`\`\`
 
 ---
 
